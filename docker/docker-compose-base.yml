@@ -5,7 +5,7 @@ services:
       - elasticsearch
     image: elasticsearch:${STACK_VERSION}
     volumes:
-      - esdata01:/usr/share/elasticsearch/data
+      - ./persistence/esdata01:/usr/share/elasticsearch/data
     ports:
       - ${ES_PORT}:9200
     env_file: .env
@@ -32,7 +32,7 @@ services:
       timeout: 10s
       retries: 120
     networks:
-      - ragflow
+      - my_bridge_network
     restart: on-failure
 
   infinity:
@@ -41,7 +41,7 @@ services:
       - infinity
     image: infiniflow/infinity:v0.6.0-dev3
     volumes:
-      - infinity_data:/var/infinity
+      - ./persistence/infinity_data:/var/infinity
       - ./infinity_conf.toml:/infinity_conf.toml
     command: ["-f", "/infinity_conf.toml"]
     ports:
@@ -57,7 +57,7 @@ services:
         soft: 500000
         hard: 500000
     networks:
-      - ragflow
+      - my_bridge_network
     healthcheck:
       test: ["CMD", "curl", "http://localhost:23820/admin/node/current"]
       interval: 10s
@@ -84,10 +84,10 @@ services:
     ports:
       - ${MYSQL_PORT}:3306
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./persistence/mysql_data:/var/lib/mysql
       - ./init.sql:/data/application/init.sql
     networks:
-      - ragflow
+      - my_bridge_network
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-uroot", "-p${MYSQL_PASSWORD}"]
       interval: 10s
@@ -108,9 +108,9 @@ services:
       - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
       - TZ=${TIMEZONE}
     volumes:
-      - minio_data:/data
+      - ./persistence/minio_data:/data
     networks:
-      - ragflow
+      - my_bridge_network
     restart: on-failure
 
   redis:
@@ -122,25 +122,11 @@ services:
     ports:
       - ${REDIS_PORT}:6379
     volumes:
-      - redis_data:/data
+      - ./persistence/redis_data:/data
     networks:
-      - ragflow
+      - my_bridge_network
     restart: on-failure
 
-
-
-volumes:
-  esdata01:
-    driver: local
-  infinity_data:
-    driver: local
-  mysql_data:
-    driver: local
-  minio_data:
-    driver: local
-  redis_data:
-    driver: local
-
 networks:
-  ragflow:
-    driver: bridge
+  my_bridge_network:
+    external: true
